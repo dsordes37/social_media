@@ -1,4 +1,3 @@
-create database social_media;
 use social_media;
 
 create table users(
@@ -7,8 +6,10 @@ create table users(
     password varchar(255) not null,
     username varchar(50) unique not null,
     full_name varchar(50) not null,
+    image varchar(2083) not null default "https://cdn-icons-png.freepik.com/512/64/64572.png",
     created_at timestamp default current_timestamp,
-    updated_at timestamp default current_timestamp on update current_timestamp
+    updated_at timestamp default current_timestamp on update current_timestamp,
+    index idx_username (username)
 );
 
 create table posts(
@@ -27,20 +28,12 @@ create table comments(
 	id int auto_increment primary key,
     content varchar(500) not null,
     like_count int default 0,
-    comment_count int default 0,
-    reply_count int default 0,
     user_id int not null,
     post_id int null,
-    parent_comment_id int null,
     created_at timestamp default current_timestamp,
     updated_at timestamp default current_timestamp on update current_timestamp,
-    constraint chk_post_or_comment check(
-		(post_id is not null and parent_comment_id is null) or
-        (post_id is null and parent_comment_id is not null)
-    ),
     foreign key(user_id) references users(id) on delete cascade,
-    foreign key(post_id) references posts(id) on delete cascade,
-    foreign key(parent_comment_id) references comments(id) on delete cascade
+    foreign key(post_id) references posts(id) on delete cascade
 );
 
 create table likes(
@@ -63,16 +56,17 @@ create table follows(
     follower_id int not null,
     following_id int not null,
     created_at timestamp default current_timestamp,
+    updated_at timestamp default current_timestamp on update current_timestamp,
     unfollowed_at timestamp null,
     primary key(follower_id, following_id),
     foreign key(follower_id) references users(id) on delete cascade,
     foreign key(following_id) references users(id) on delete cascade,
-    index idx_unfollowed_at (unfollowed_at)
+    index idx_follow (follower_id, following_id)
 );
 
 #========================================================================
 
-INSERT INTO users (email, password, username, full_name) VALUES
+/*INSERT INTO users (email, password, username, full_name) VALUES
 ('alice@example.com', 'password123', 'alice123', 'Alice Johnson'),
 ('bob@example.com', 'securepass456', 'bob_dev', 'Bob Williams'),
 ('charlie@example.com', 'charlie789!', 'charlie_tech', 'Charlie Brown'),
@@ -82,10 +76,16 @@ INSERT INTO users (email, password, username, full_name) VALUES
 ('grace@example.com', 'grace2025Web$', 'grace_web', 'Grace Wilson'),
 ('henry@example.com', 'henryJS987', 'henry_js', 'Henry Martinez'),
 ('isabel@example.com', 'Isabel@UIUX', 'isabel_uiux', 'Isabel Taylor'),
-('jack@example.com', 'jackNODE!2024', 'jack_node', 'Jack Anderson');
+('jack@example.com', 'jackNODE!2024', 'jack_node', 'Jack Anderson');*/
+INSERT INTO users (email, password, username, full_name) VALUES
+('alice@example.com', 'hashed_password_1', 'alice123', 'Alice Costa'),
+('bob@example.com', 'hashed_password_2', 'bob_the_builder', 'Bob Silva'),
+('carla@example.com', 'hashed_password_3', 'carla_dev', 'Carla Mendes'),
+('daniel@example.com', 'hashed_password_4', 'dan_d', 'Daniel Souza'),
+('eva@example.com', 'hashed_password_5', 'eva88', 'Eva Lima');
 
 
-INSERT INTO posts (content, color, user_id) VALUES
+/*INSERT INTO posts (content, color, user_id) VALUES
 ('Explorando novas tecnologias hoje!', '#FFDDC1', 1),
 ('Acabei de lançar um novo projeto, confira!', '#FFD1DC', 2),
 ('Alguém recomenda um bom curso de backend?', '#FFABAB', 3),
@@ -105,9 +105,15 @@ INSERT INTO posts (content, color, user_id) VALUES
 ('Vale a pena aprender Python em 2025?', '#FFB7B2', 7),
 ('Postei um artigo sobre arquitetura de software.', '#E2F0CB', 8),
 ('Descobri um novo atalho no VS Code!', '#B5EAD7', 9),
-('O que vocês acham do Bun? Alguém já usou?', '#C7CEEA', 10);
+('O que vocês acham do Bun? Alguém já usou?', '#C7CEEA', 10);*/
+INSERT INTO posts (content, like_count, comment_count, color, user_id) VALUES
+('Bom dia, pessoal! 🌞', 2, 1, '#FFB908', 1),
+('Acabei de lançar um projeto novo! 💻', 3, 2, '#004BAD', 3),
+('Alguém aí joga xadrez? ♟️', 1, 0, '#808080', 2),
+('Dica de filme: “A Origem” 🎥', 0, 1, '#002A61', 4),
+('Final de semana chegando! 🙌', 4, 3, '#FF5733', 5);
 
-INSERT INTO comments (content, user_id, post_id, parent_comment_id) VALUES
+/*INSERT INTO comments (content, user_id, post_id, parent_comment_id) VALUES
 ('Ótima postagem, muito útil!', 2, 1, NULL),
 ('Concordo, também gosto de estudar novas tecnologias.', 3, 1, NULL),
 ('Parabéns pelo projeto! Onde posso ver?', 4, 2, NULL),
@@ -127,20 +133,53 @@ INSERT INTO comments (content, user_id, post_id, parent_comment_id) VALUES
 ('TypeScript vale muito a pena!', 8, 16, NULL),
 ('Python é excelente para backend e automação.', 9, 17, NULL),
 ('Artigo muito bom! Parabéns.', 10, 18, NULL),
-('Bun parece promissor, quero testar.', 1, 20, NULL);
+('Bun parece promissor, quero testar.', 1, 20, NULL);*/
+INSERT INTO comments (content, like_count, user_id, post_id) VALUES
+('Adorei! Bom dia pra você também!', 1, 2, 1),
+('Quero ver esse projeto! Link?', 2, 1, 2),
+('Mandou bem!', 1, 5, 2),
+('Ótima dica! Vou assistir.', 0, 3, 4),
+('Já tô no clima!', 1, 1, 5),
+('Finalmente, preciso descansar!', 2, 2, 5),
+('Sábado é sagrado 😄', 1, 4, 5);
 
-INSERT INTO likes (user_id, post_id, comment_id) VALUES
+/*INSERT INTO likes (user_id, post_id, comment_id) VALUES
 (1, 2, NULL), (2, 3, NULL), (3, 4, NULL), (4, 5, NULL),
 (5, 6, NULL), (6, 7, NULL), (7, 8, NULL), (8, 9, NULL),
 (9, 10, NULL), (10, 1, NULL), (1, NULL, 1), (2, NULL, 2),
 (3, NULL, 3), (4, NULL, 4), (5, NULL, 5), (6, NULL, 6),
-(7, NULL, 7), (8, NULL, 8), (9, NULL, 9), (10, NULL, 10);
+(7, NULL, 7), (8, NULL, 8), (9, NULL, 9), (10, NULL, 10);*/
+-- Likes em posts
+INSERT INTO likes (user_id, post_id) VALUES
+(2, 1),
+(4, 1),
+(1, 2),
+(5, 2),
+(2, 2),
+(5, 5),
+(3, 5),
+(1, 5),
+(2, 5);
 
-INSERT INTO follows (follower_id, following_id) VALUES
+-- Likes em comments
+INSERT INTO likes (user_id, comment_id) VALUES
+(3, 1),
+(4, 2),
+(1, 3),
+(5, 6);
+
+/*INSERT INTO follows (follower_id, following_id) VALUES
 (1, 2),(1, 3),(1, 5),(2, 1),(2, 7),(3, 6),(3, 8),(3, 10),
 (4, 10),(4, 7),(5, 9),(5, 6),(5, 8),(6, 7), (6, 1), (6, 2),
 (7, 8), (7, 10), (7, 3), (8, 1), (8, 5), (8, 7), (9, 10), (9,1),
-(10, 9), (10, 1), (10, 3);
+(10, 9), (10, 1), (10, 3);*/
+INSERT INTO follows (follower_id, following_id) VALUES
+(1, 2),
+(1, 3),
+(2, 3),
+(3, 1),
+(4, 5),
+(5, 1);
 
 
 
@@ -155,8 +194,10 @@ select * from likes;
 select * from likes where comment_id=3;
 select * from follows where following_id=10;
 
-select u.username, u.full_name, p.content from users u join posts p on u.id=p.user_id where p.user_id=8;
+select u.username, u.full_name, p.content from users u join posts p on u.id=p.user_id;
 
-select id, username, full_name from users where email='frank@example.com' and password='frankH@cker!';
+select id, username, full_name from users where email='alice@example.com' and password='hashed_password_1';
+
+
 
 #drop database social_media;
